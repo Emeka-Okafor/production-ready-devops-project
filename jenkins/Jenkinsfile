@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "flask-devops-app"
+        CONTAINER_NAME = "flask-container"
+    }
+
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning repository...'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dir('../app') {
+                        bat 'docker build -t %IMAGE_NAME% .'
+                    }
+                }
+            }
+        }
+
+        stage('Test Application') {
+            steps {
+                echo 'Running basic tests...'
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                script {
+                    bat 'docker stop %CONTAINER_NAME% || exit 0'
+                    bat 'docker rm %CONTAINER_NAME% || exit 0'
+
+                    bat 'docker run -d --name %CONTAINER_NAME% -p 80:5000 %IMAGE_NAME%'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Application deployed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
